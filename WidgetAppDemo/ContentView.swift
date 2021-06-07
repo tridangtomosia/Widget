@@ -25,7 +25,7 @@ struct ContentView: View {
                 Button(action: {
                     isOpenCalendar.toggle()
                 }, label: {
-                    Text("Setting Calendar")
+                    Text("Setting Calendar 1")
                 })
                 
                 Button(action: {
