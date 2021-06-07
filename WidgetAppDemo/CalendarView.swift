@@ -65,7 +65,7 @@ struct CalendarMonthView: View {
                 Button {
                     isPresentPickerColorView.toggle()
                 } label: {
-                    Text(Image(systemName: "pencil").renderingMode(.original)).font(.system(size: 25)) + Text("Setting Color").font(.system(size: 20))
+                    Text(Image(systemName: "pencil").renderingMode(.original)).font(.system(size: 25)) + Text("Setting Color aaaa aaaa ").font(.system(size: 20))
                 }
                 .overlay(RoundedRectangle(cornerRadius: 3).stroke(Color.blue, lineWidth: 2))
                 Spacer()
