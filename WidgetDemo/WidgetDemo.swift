@@ -35,21 +35,24 @@ struct Provider: IntentTimelineProvider {
 //
 //        // Generate a timeline consisting of five entries an hour apart, starting from the current date.
 //        let currentDate = Date()
-//        for minuteOfSet in 0 ..< 24 {
-//            let entryDate = Calendar.current.date(byAdding: .hour,
+//        let relevance = TimelineEntryRelevance(score: Float(DataEntry(dataShared: WidgetGroup.get()).battery))
+//        for minuteOfSet in 0 ..< 60 {
+//            let entryDate = Calendar.current.date(byAdding: .minute,
 //                                                  value: minuteOfSet,
 //                                                  to: currentDate)!
-//        let entry = SimpleEntry(date: entryDate,
-//                                dataEntry: DataEntry(typeWidget: getTypleWidget(for: configuration),
-//                                                     dataShared: WidgetGroup.get()))
-//        entries.append(entry)
+//            let entry = SimpleEntry(date: entryDate,
+//                                    relevance: relevance,
+//                                    dataEntry: DataEntry(typeWidget: getTypleWidget(for: configuration),
+//                                                         dataShared: WidgetGroup.get())
+//            )
+//            entries.append(entry)
 //        }
-
-//        let timeline = Timeline(entries: entries, policy: .atEnd)
+//
+//        let timeline = Timeline(entries: entries, policy: .after(<#T##date: Date##Date#>))
 //        completion(timeline)
         let relevance = TimelineEntryRelevance(score: Float(DataEntry(dataShared: WidgetGroup.get()).battery))
         let midnight = Calendar.current.startOfDay(for: Date())
-        let nextMidnight = Calendar.current.date(byAdding: .minute, value: 1, to: midnight)!
+        let nextMidnight = Calendar.current.date(byAdding: .second, value: 30, to: midnight)!
         let entries = [SimpleEntry(date: nextMidnight, relevance: relevance,
                                    dataEntry: DataEntry(typeWidget: getTypleWidget(for: configuration),
                                                         dataShared: WidgetGroup.get()))]
@@ -111,23 +114,40 @@ struct WidgetDemoEntryView: View {
     }
 }
 
-
 struct WidgetDemoEntrySmallView: View {
     var entry: Provider.Entry
+    let date = Date()
+    var isShow = false
+    var text = ""
+    init(entry: Provider.Entry) {
+        self.entry = entry
+        text = "day là text"
+        WidgetCenter.shared.reloadAllTimelines()
+//        checkingBattery()
+    }
 
     var body: some View {
-        VStack(alignment: .center) {
-            if entry.dataEntry.typeWidget == .memory {
-                Text(WeakDay.name(day: Calendar.current.component(.weekday, from: Date())))
-                    .foregroundColor(entry.dataEntry.dataShared.colorCalendar.revert())
-                Text(entry.date, style: .date)
-                Text(entry.date, style: .timer).frame(width: 74, height: 20)
-            } else {
-                BatteryView(battery: entry.dataEntry.battery * 100, color: entry.dataEntry.dataShared.colorBattery.revert())
-                Text("Battery: ") + Text("\(Int(entry.dataEntry.battery * 100))%").font(.system(size: 20))
+        Group {
+            VStack(alignment: .center) {
+                if entry.dataEntry.typeWidget == .memory {
+                    let time = Calendar.current.startOfDay(for: entry.date)
+//                    Text(WeakDay.name(day: Calendar.current.component(.weekday, from: Date())))
+//                        .foregroundColor(entry.dataEntry.dataShared.colorCalendar.revert())
+//                    Text(entry.date, style: .date)
+                    Text(time, style: .timer)
+                        .frame(width: 74, height: 20)
+                    Text(getSecondTime(date: entry.dataEntry.memory.a))
+                    if isShow {
+                        Text("Text da dc goi sau khi vao background")
+                    }
+                    Text(text)
+                } else {
+                    BatteryView(battery: entry.dataEntry.battery * 100, color: entry.dataEntry.dataShared.colorBattery.revert())
+                    Text("Battery: ") + Text("\(Int(entry.dataEntry.battery * 100))%").font(.system(size: 20))
+                }
             }
-        }.padding()
-//        .background(ColorView(colorIndex: entry.dataEntry.typeWidget.rawValue))
+        }
+        .padding()
     }
 
     func getSecondTime(date: Date) -> String {
@@ -136,18 +156,30 @@ struct WidgetDemoEntrySmallView: View {
         let s = Calendar.current.component(.second, from: date)
         return "\(h): \(m): \(s)"
     }
+    
+//    func checkingBattery() {
+//        if Calendar.current.component(.minute, from: date) != Calendar.current.component(.minute, from: entry.date) {
+////            if UIDevice.current.batteryLevel != entry.dataEntry.battery {
+//            isShow = true
+////                WidgetCenter.shared.reloadAllTimelines()
+////            }
+//        } else if Calendar.current.component(.hour, from: date) != Calendar.current.component(.hour, from: entry.date) {
+////            if UIDevice.current.batteryLevel != entry.dataEntry.battery {
+////                WidgetCenter.shared.reloadAllTimelines()
+////            }
+//        }
+//    }
 
-//    static let battery: Float = {
-//        UIDevice.current.isBatteryMonitoringEnabled = true
-//        let batteryLvl = UIDevice.current.batteryLevel
-//        return batteryLvl
-//    }()
+    let battery: Float = {
+        UIDevice.current.isBatteryMonitoringEnabled = true
+        let batteryLvl = UIDevice.current.batteryLevel
+        return batteryLvl
+    }()
 }
 
 struct WidgetDemoEntryMediumView: View {
     @Environment(\.calendar) var calendar
     var entry: Provider.Entry
-    @State var date = Date()
 
     var body: some View {
         VStack {
@@ -158,13 +190,15 @@ struct WidgetDemoEntryMediumView: View {
             } else {
                 HStack {
                     VStack {
+                        let time = Calendar.current.startOfDay(for: entry.date)
                         Text(DateFormatter.month.string(from: Date()))
                             .foregroundColor(entry.dataEntry.dataShared.colorCalendar.revert())
                             .font(.system(size: 14))
                         Text(WeakDay.name(day: Calendar.current.component(.weekday, from: Date())))
                             .foregroundColor(entry.dataEntry.dataShared.colorCalendar.revert())
 //                        Text(entry.date, style: .date)
-                        Text(entry.date, style: .timer).frame(width: 74, height: 20)
+                        Text(time, style: .timer)
+                            .frame(width: 74, height: 20)
                     }
                     .frame(width: 100, height: 100)
                     .overlay(Circle()
@@ -173,7 +207,7 @@ struct WidgetDemoEntryMediumView: View {
                     Rectangle().frame(width: 1, height: 200, alignment: .center)
                     Spacer().frame(width: 10)
                     VStack {
-                        MonthView(month: date,
+                        MonthView(month: Date(),
                                   showHeader: false,
                                   color: entry.dataEntry.dataShared.colorCalendar.revert(),
                                   content: { date in
@@ -246,6 +280,30 @@ struct WidgetDemo: Widget {
         .configurationDisplayName("My Widget")
         .description("This is an example widget.")
         .supportedFamilies([.systemMedium, .systemSmall, .systemLarge])
+    }
+}
+
+struct WidgetDemo1: Widget {
+    let kind: String = "WidgetDemo1"
+
+    var body: some WidgetConfiguration {
+        IntentConfiguration(kind: kind,
+                            intent: ConfigurationIntent.self,
+                            provider: Provider()) { entry in
+            WidgetDemoEntryView(entry: entry)
+        }
+        .configurationDisplayName("My Widget 1")
+        .description("This is an example widget. 1")
+        .supportedFamilies([.systemMedium, .systemSmall, .systemLarge])
+    }
+}
+
+
+struct widgetBuilder: WidgetBundle {
+    @WidgetBundleBuilder
+    var body: some Widget {
+        WidgetDemo()
+        WidgetDemo1()
     }
 }
 

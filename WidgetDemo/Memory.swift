@@ -36,3 +36,25 @@ struct Memory {
         return usedSpace
     }
 }
+
+class RequestBackground {
+    let url: URL
+    init(url: URL) {
+        self.url = url
+    }
+    
+    private lazy var urlSession: URLSession = {
+        let config = URLSessionConfiguration.background(withIdentifier: "MySession")
+        config.isDiscretionary = true
+        config.sessionSendsLaunchEvents = true
+        return URLSession(configuration: config)
+    }()
+    
+    func request() {
+        let backgroundTask = urlSession.downloadTask(with: url)
+        backgroundTask.earliestBeginDate = Date().addingTimeInterval(60 * 60)
+        backgroundTask.countOfBytesClientExpectsToSend = 200
+        backgroundTask.countOfBytesClientExpectsToReceive = 500 * 1024
+        backgroundTask.resume()
+    }
+}

@@ -1,6 +1,7 @@
 import SwiftUI
 import WidgetKit
 
+
 extension DateFormatter {
     static var month: DateFormatter {
         let formatter = DateFormatter()
@@ -47,6 +48,47 @@ extension Calendar {
     }
 }
 
+struct CalendarMonthView: View {
+    @Environment(\.calendar) var calendar
+    @Binding var currentDate: Date
+    @Binding var colorCalendar: Color
+    @State var isPresentPickerColorView: Bool = false
+    var colorBattery: Color = .green
+    private var year: DateInterval {
+        calendar.dateInterval(of: .year, for: Date())!
+    }
+
+    var body: some View {
+        VStack {
+            HStack {
+                Spacer()
+                Button {
+                    isPresentPickerColorView.toggle()
+                } label: {
+                    Text(Image(systemName: "pencil").renderingMode(.original)).font(.system(size: 25)) + Text("Setting Color").font(.system(size: 20))
+                }
+                .overlay(RoundedRectangle(cornerRadius: 3).stroke(Color.blue, lineWidth: 2))
+                Spacer()
+                    .frame(width: 20)
+            }
+            CalendarView(interval: year, color: colorCalendar, content: { date in
+                Text("30")
+                    .hidden()
+                    .overlay(
+                        Text(String(self.calendar.component(.day, from: date))).font(.system(size: 10))
+                    )
+
+            }, currentDate: $currentDate)
+                .background(Color("NavigationBarColor"))
+        }
+        .sheet(isPresented: $isPresentPickerColorView) {
+            PickerColorView(isDismis: $isPresentPickerColorView, color: colorCalendar, colorCalendar: $colorCalendar) {
+                WidgetGroup.save(WidgetShared(name: "", desCription: "", colorCalendar: TypeColor.convertTo(color: colorCalendar), colorBattery: TypeColor.convertTo(color: colorBattery)))
+            }
+        }
+    }
+}
+
 struct WeekView<DateView>: View where DateView: View {
     @Environment(\.calendar) var calendar
 
@@ -82,18 +124,14 @@ struct WeekView<DateView>: View where DateView: View {
 
     var body: some View {
         HStack(spacing: 0.0) {
-//            Divider()
             ForEach(days, id: \.self) { date in
                 HStack(alignment: .top, spacing: 0.0) {
-//                    Divider()
                     VStack(alignment: .trailing, spacing: 0.0) {
                         if self.calendar.isDate(self.week, equalTo: date, toGranularity: .month) {
                             HStack {
                                 Spacer()
                                 self.content(date)
                                     .foregroundColor(checkingCurrentDay(date: date) ? .red : dateInWeekened(date: date) == true ? .secondary : .primary)
-
-//                                .padding()
                             }
                             .background(checkingCurrentDay(date: date) ? Color.white: color)
 
@@ -109,8 +147,7 @@ struct WeekView<DateView>: View where DateView: View {
                     }
                 }
                 .frame(width: size.width / 7, height: size.height / 7)
-                .background(dateInWeekened(date: date) == true ? Color("CalendarWeekenedColor") : Color(.systemBackground))
-//                .edgesIgnoringSafeArea(.all)
+//                .background(dateInWeekened(date: date) == true ? Color.gray : Color(.systemBackground))
             }
         }
     }
@@ -150,7 +187,6 @@ struct MonthView<DateView>: View where DateView: View {
     }
 
     private var header: some View {
-//        let component = calendar.component(.month, from: month)
         let formatter = DateFormatter.month
         return
             HStack { Text(formatter.string(from: month))
@@ -169,15 +205,10 @@ struct MonthView<DateView>: View where DateView: View {
                         .font(.largeTitle)
                 }
                 header
-//                Divider()
             }
             ForEach(weeks, id: \.self) { week in
                 WeekView(week: week, size: size, color: color, content: self.content)
-//                    .edgesIgnoringSafeArea(.all)
-//                Divider()
-//                    .edgesIgnoringSafeArea(.all)
             }
-//            Divider()
         }
     }
 }
@@ -241,7 +272,6 @@ struct PickerColorView: View {
                     isDismis = false
                     colorCalendar = color
                     completed?()
-//                    WidgetGroup.save(WidgetShared(name: "", desCription: "", colorCalendar: typeColor.convertTo(color: color), colorBattery: nil))
                 } label: {
                     Text("Done")
                 }
@@ -273,63 +303,11 @@ struct PickerColorView: View {
     }
 }
 
-struct CalendarMonthView: View {
-    @Environment(\.calendar) var calendar
-    @Binding var currentDate: Date
-    @Binding var colorCalendar: Color
-    @State var isPresentPickerColorView: Bool = false
-    var colorBattery: Color = .green
-    private var year: DateInterval {
-        calendar.dateInterval(of: .year, for: Date())!
-    }
 
-    var body: some View {
-        VStack {
-            HStack {
-                Spacer()
-                Button {
-                    isPresentPickerColorView.toggle()
-                } label: {
-                    Text(Image(systemName: "pencil").renderingMode(.original)).font(.system(size: 25)) + Text("Setting Color").font(.system(size: 20))
-                }
-                .overlay(RoundedRectangle(cornerRadius: 3).stroke(Color.blue, lineWidth: 2))
-                Spacer()
-                    .frame(width: 20)
-            }
-            CalendarView(interval: year, color: colorCalendar, content: { date in
-                Text("30")
-                    .hidden()
-                    .overlay(
-                        Text(String(self.calendar.component(.day, from: date))).font(.system(size: 10))
-                    )
-
-            }, currentDate: $currentDate)
-                .background(Color("NavigationBarColor"))
-        }
-        .sheet(isPresented: $isPresentPickerColorView) {
-            PickerColorView(isDismis: $isPresentPickerColorView, color: colorCalendar, colorCalendar: $colorCalendar) {
-                WidgetGroup.save(WidgetShared(name: "", desCription: "", colorCalendar: TypeColor.convertTo(color: colorCalendar), colorBattery: TypeColor.convertTo(color: colorBattery)))
-            }
-        }
-    }
-}
 
 func checkingCurrentDay(date: Date) -> Bool {
     return Calendar.current.component(.month, from: date) == Calendar.current.component(.month, from: Date()) && Calendar.current.component(.day, from: Date()) == Calendar.current.component(.day, from: date)
 }
-
-// struct Conten: View {
-//    @State var date: Date = Date()
-//    var body: some View {
-//        CalendarMonthView(currentDate: $date)
-//    }
-// }
-//
-// struct Content_Previews: PreviewProvider {
-//    static var previews: some View {
-//        Conten()
-//    }
-// }
 
 enum WeakDay: String {
     static func name(day: Int) -> String {

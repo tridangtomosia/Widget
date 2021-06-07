@@ -8,45 +8,58 @@
 import SwiftUI
 
 struct BatteryView: View {
-    var battery: Float
+    @State var battery: Float
     let color: Color
     init(battery: Float, color: Color = .green) {
         self.battery = battery
         self.color = color
+        NotificationCenter.default.addObserver(forName: UIDevice.batteryLevelDidChangeNotification, object: nil, queue: nil, using: didChangeBattery(_:))
     }
-    
+
     var body: some View {
         VStack {
-            HStack(spacing: 2) {
-                let data = Int(battery / 20)
-                if battery < 10 {
-                    Rectangle()
-                        .frame(width: 10, height: 35)
-                        .foregroundColor(Color.red)
-                } else {
-                    ForEach(0 ... data, id: \.self) { _ in
+            VStack {
+                HStack(spacing: 2) {
+                    let data = Int(battery / 20)
+                    if battery < 10 {
                         Rectangle()
-                            .frame(width: 10, height: 35)
-                            .foregroundColor(color)
+                            .frame(width: 9, height: 30)
+                            .foregroundColor(Color.red)
+                    } else {
+                        ForEach(0 ... data, id: \.self) { _ in
+                            Rectangle()
+                                .frame(width: 9, height: 30)
+                                .foregroundColor(color)
+                        }
+                    }
+                    if data != 5 {
+                        Spacer()
                     }
                 }
-                if data != 5 {
-                    Spacer()
-                }
+                .frame(width: 76, height: 15)
+                .overlay(Image("battery"))
             }
-            .frame(width: 76, height: 15)
-            .overlay(Image("battery"))
-            
-        }.frame(width: 100, height: 100)
-            .overlay(Circle().stroke(color, lineWidth: 5))
+            .frame(width: 100, height: 100)
+            .overlay(CircleView(battery: Double(battery * 3.6)).stroke(color, lineWidth: 5))
+        }
     }
+
+    func didChangeBattery(_ notification: Notification) {
+        battery = Self.battery * 100
+    }
+
+    static let battery: Float = {
+        UIDevice.current.isBatteryMonitoringEnabled = true
+        let batteryLvl = UIDevice.current.batteryLevel
+        return batteryLvl
+    }()
 }
 
 struct BatteryOptionView: View {
     @State var isPresentPickerColorView: Bool = false
     var colorCalendar: Color = .green
     @Binding var color: Color
-    
+
     var body: some View {
         VStack {
             HStack {
@@ -62,7 +75,7 @@ struct BatteryOptionView: View {
                 Spacer().frame(width: 20)
             }
             Spacer()
-            BatteryView(battery: Self.battery, color: color)
+            BatteryView(battery: Self.battery * 100, color: color)
             Spacer()
         }
         .sheet(isPresented: $isPresentPickerColorView) {
@@ -71,7 +84,7 @@ struct BatteryOptionView: View {
             }
         }
     }
-    
+
     static let battery: Float = {
         UIDevice.current.isBatteryMonitoringEnabled = true
         let batteryLvl = UIDevice.current.batteryLevel
@@ -79,8 +92,8 @@ struct BatteryOptionView: View {
     }()
 }
 
-struct BatteryView_Previews: PreviewProvider {
-    static var previews: some View {
-        BatteryOptionView( color: .constant(.green))
-    }
-}
+// struct BatteryView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        BatteryOptionView(color: .constant(.green))
+//    }
+// }
